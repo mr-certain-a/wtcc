@@ -93,6 +93,6 @@ Pane-Exec 'cls'
 # 完了メッセージ
 Pane-Exec 'Write-Host "　　🆗ターミナル設定完了🆗　　" -ForegroundColor DarkBlue -BackgroundColor Yellow'
 
-Pane-Move 'up' 1
-Pane-Move 'left' 1
-Pane-Exec 'codex --full-auto'
+# 左ペインに移してcodexを立ち上げる
+# Pane-Move 'left' 1
+# Pane-Exec 'codex --full-auto'
