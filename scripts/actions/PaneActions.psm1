@@ -37,7 +37,8 @@ function Pane-SetBg {
     [Parameter(Mandatory)][string]$Color
   )
   $path = Get-PaneActionScriptPath -Name 'set-bg'
-  $cmd  = "powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Color '{1}'" -f $path, $Color
+  # set-bg は NoProfile/ExecutionPolicy の指定なしで呼び出す（WTでの反映優先）
+  $cmd  = "powershell -File '{0}' -Color '{1}'" -f $path, $Color
   Invoke-PaneCommand -ArgList @('exec', $cmd)
 }
 
