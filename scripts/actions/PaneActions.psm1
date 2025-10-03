@@ -28,7 +28,9 @@ function Pane-Split {
     [Parameter(Mandatory)][ValidateSet('vertical','horizontal')] [string]$Mode
   )
   $path = Get-PaneActionScriptPath -Name 'split'
-  $cmd  = "powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Mode '{1}'" -f $path, $Mode
+  $pp   = "'" + ($path -replace "'", "''") + "'"
+  $mm   = "'" + ($Mode -replace "'", "''") + "'"
+  $cmd  = "& $pp -Mode $mm"
   Invoke-PaneCommand -ArgList @('exec', $cmd)
 }
 
@@ -37,8 +39,10 @@ function Pane-SetBg {
     [Parameter(Mandatory)][string]$Color
   )
   $path = Get-PaneActionScriptPath -Name 'set-bg'
-  # set-bg は NoProfile/ExecutionPolicy の指定なしで呼び出す（WTでの反映優先）
-  $cmd  = "powershell -File '{0}' -Color '{1}'" -f $path, $Color
+  # 直接スクリプト実行（新しいPowerShellプロセスは立てない）
+  $pp   = "'" + ($path -replace "'", "''") + "'"
+  $cc   = "'" + ($Color -replace "'", "''") + "'"
+  $cmd  = "& $pp -Color $cc"
   Invoke-PaneCommand -ArgList @('exec', $cmd)
 }
 
@@ -48,7 +52,9 @@ function Pane-Resize {
     [int]$Count = 1
   )
   $path = Get-PaneActionScriptPath -Name 'resize'
-  $cmd  = "powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Direction '{1}' -Count {2}" -f $path, $Direction, $Count
+  $pp   = "'" + ($path -replace "'", "''") + "'"
+  $dd   = "'" + ($Direction -replace "'", "''") + "'"
+  $cmd  = "& $pp -Direction $dd -Count $Count"
   Invoke-PaneCommand -ArgList @('exec', $cmd)
 }
 
