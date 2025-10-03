@@ -1,0 +1,122 @@
+WTCC 再生手順スクリプト プロトコル（script.txt 用）
+
+このドキュメントは WTCC の再生手順ファイル（script.txt）で使えるコマンドと書式をまとめたもの。
+
+== 基本 ==
+- 1行につき1コマンドを実行する。
+- 空行は無視する。
+- 行頭が # の行はコメントとして無視する。
+- トークン分割は空白区切り。シングルクォート(')またはダブルクォート(")で囲むと空白を含むトークンとして扱う。
+- 例外: `pane exec` は行末までをそのまま 1 引数として取り、さらに内部で `;` 区切りで順次実行する。
+
+== 実行環境 ==
+- エントリ: `WTCC/wtcc.ps1`
+  - 引数 `-ScriptPath` の既定値は `./script.txt`。
+  - 引数 `-Interval`（ms）で送出キーの待ち時間を調整（既定 500ms）。
+
+== コマンド体系 ==
+トップレベルのコマンドは次の4系統。
+- tab
+- pane
+- window
+- wait
+- key / key-send
+
+以下、各系統のサブコマンドと動作を記載する。
+
+----------------------------------------
+tab 系
+----------------------------------------
+1) tab new [--title <NAME>|title=<NAME>] [--tabColor <#RRGGBB>|tabColor=<#RRGGBB>|color=<#RRGGBB>]
+   - 役割: 新しいタブを開く。
+   - 動作:
+     * `--title` や `--tabColor`/`color` が指定された場合、コマンドライン `wt --title <NAME> --tabColor <#RRGGBB>` を送信して Enter。
+     * 指定が無い場合は `Ctrl+Shift+D` を送出（WT の既定ショートカットでタブ複製/新規タブ相当）。その後 2 秒待機。
+
+2) tab rename <NEW_NAME>
+   - 役割: 現在のタブ名を変更。
+   - 動作:
+     * コマンドパレットを `Ctrl+Shift+P` で開き、`Rename tab`（ローカライズ対応: `wt_commands_map.json` の `rename-tab` を参照）を入力して Enter。
+     * 入力フォーカスが移ったら全選択して `<NEW_NAME>` を貼り付け、Enter で確定。
+     * バージョン依存: WT 1.22.x = 「タブ名を変更」、WT 1.21.x = 「[名前の変更] タブ」。`wt_commands_map.json` の `byVersion` で定義可能。
+
+3) tab color <#RRGGBB>
+   - 役割: タブカラーを設定。
+   - 動作: コマンドパレットの `Set tab color` を実行し、色コードを入力して Enter。
+
+----------------------------------------
+pane 系
+----------------------------------------
+1) pane split <vertical|horizontal>
+   - 役割: ペインを分割。
+   - 動作:
+     * スクリプト `actions/split.ps1` を `-Mode <vertical|horizontal>` で実行。
+     * 不正なモード指定時はフォールバックで `Alt+Shift+D` を送出。
+
+2) pane resize <left|right|up|down> <COUNT>
+   - 役割: ペインサイズを変更。
+   - 動作: `<COUNT>` 回、`Alt+Shift+矢印` を送出（方向は指定に従う）。
+
+3) pane move <left|right|up|down> <COUNT>
+   - 役割: フォーカス中のペインを移動。
+   - 動作: `<COUNT>` 回、`Alt+矢印` を送出（方向は指定に従う）。
+
+4) pane bg <#RRGGBB>
+   - 役割: ペイン背景色を直接設定（内部スクリプト呼び出し）。
+   - 動作: `actions/set-bg.ps1 -Color <#RRGGBB>` を実行。
+   - エラー: 引数が無い場合は警告「pane bg には #RRGGBB を指定してね」を表示。
+
+5) pane exec <CMD1; CMD2; ...>
+   - 役割: 任意のコマンド列を順次実行。
+   - 動作: `;` で分割し、各コマンドを送信して Enter。
+   - 備考: `pane exec` の直後から行末までが 1 引数として渡されるため、空白やクォートを意識せず書ける。
+
+----------------------------------------
+window 系
+----------------------------------------
+1) window size <WIDTH> <HEIGHT>
+   - 役割: アクティブな WT ウィンドウのサイズをピクセル指定で変更。
+   - 動作: Win32API `MoveWindow` を呼び出し、位置は維持・サイズのみ変更。
+
+----------------------------------------
+wait（トップレベル）
+----------------------------------------
+1) wait <MILLISECONDS>
+   - 役割: 指定ミリ秒だけ待機（スリープ）。
+   - 動作: `Start-Sleep -Milliseconds <MILLISECONDS>` を実行。
+   - 例: `tab rename NEWNAME` の直後に `wait 500` を入れて、フォーカス移動や描画の余裕を作る。
+
+----------------------------------------
+key 系（キー送出）
+----------------------------------------
+1) key send <KEY[ *COUNT]> [KEY...]
+   - 役割: キー入力を直接送出。
+   - 対応: enter, tab, space, esc（大文字小文字無視）。`name*N` で回数指定可能。
+   - 例:
+     * `key send enter` （Enter 1回）
+     * `key send tab space esc` （順に送出）
+     * `key-send enter*2`（エイリアス。Enter 2回）
+
+== トークン・パース仕様（詳細） ==
+- 空白区切りでトークン化。`'...'` と `"..."` は囲みを外して 1 トークン。
+- `#` で始まる行は実行されない。
+- 未知のトップレベルコマンドを指定すると警告「未知のコマンド: <行内容>」。
+
+== 例 ==
+# タブを作って名前と色を設定
+tab new --title WTCC --tabColor #0044FF
+tab rename "Dev Env"
+tab color #112233
+
+# ペイン操作
+pane split vertical
+pane resize right 3
+pane move down 1
+pane bg #334455
+
+# 任意コマンド実行
+pane exec npm run build; npm run test
+
+== 注意 ==
+- WT のキーバインドやコマンドパレット名をカスタムしている場合、挙動が異なることがある。
+- コマンドパレットの表示名は `wt_commands_map.json` でローカライズ上書きが可能（例: `rename-tab`）。

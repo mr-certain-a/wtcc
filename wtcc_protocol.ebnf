@@ -1,0 +1,48 @@
+Script        = { Line } ;
+Line          = [ Command ] , Newline ;
+Command       = TabCommand | PaneCommand | WindowCommand | WaitCommand ;
+Comment       = "#" , { ? any character except Newline ? } ;
+
+TabCommand    = "tab" , ( TabNew | TabRename | TabColor ) ;
+TabNew        = "new" , [ TitleOption ] , [ ColorOption ] ;
+TabRename     = "rename" , String ;
+TabColor      = "color" , ColorCode ;
+
+TitleOption   = ( "--title" , String ) | ( "title=" , String ) ;
+ColorOption   = ( "--tabColor" , ColorCode )
+              | ( "tabColor=" , ColorCode )
+              | ( "color=" , ColorCode ) ;
+
+PaneCommand   = "pane" , ( PaneSplit | PaneResize | PaneMove | PaneBgColor | PaneBg | PaneExec ) ;
+PaneSplit     = "split" , ( "vertical" | "horizontal" ) ;
+PaneResize    = "resize" , Direction , Integer ;
+PaneMove      = "move" , Direction , Integer ;
+PaneBgColor   = "bgcolor" , String ;
+PaneBg        = "bg" , ColorCode ;
+PaneExec      = "exec" , ExecString ;
+
+Direction     = "left" | "right" | "up" | "down" ;
+
+WindowCommand = "window" , WindowSize ;
+WindowSize    = "size" , Integer , Integer ;
+
+WaitCommand   = "wait" , Integer ;
+
+(* --- Lexical rules --- *)
+
+String        = QuotedString | UnquotedToken ;
+QuotedString  = "'" , { ? any character except "'" ? } , "'"
+              | "\"" , { ? any character except "\"" ? } , "\"" ;
+UnquotedToken = Letter , { Letter | Digit | Symbol } ;
+
+ExecString    = { ? any character until end of line ? } ;
+
+ColorCode     = "#" , HexDigit , HexDigit , HexDigit , HexDigit , HexDigit , HexDigit ;
+
+Integer       = Digit , { Digit } ;
+Letter        = "A"…"Z" | "a"…"z" | "_" ;
+Digit         = "0"…"9" ;
+HexDigit      = Digit | "A"…"F" | "a"…"f" ;
+Symbol        = "." | "-" | "_" | "/" | ":" | ";" | "\\" ;
+
+Newline       = ? CRLF or LF ? ;
