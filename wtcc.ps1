@@ -1,7 +1,7 @@
 # WTCC エントリポイント (Windows Terminal Cockpit Customizer)
 param(
     [string]$ScriptPath = "./script.txt",  # 後方互換のため残置（未使用）
-    [int]$Interval = 1000
+    [int]$Interval = 200
 )
 
 Write-Host "" 
