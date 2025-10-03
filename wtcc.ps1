@@ -1,6 +1,5 @@
 # WTCC エントリポイント (Windows Terminal Cockpit Customizer)
 param(
-    [string]$ScriptPath = "./script.txt",  # 後方互換のため残置（未使用）
     [int]$Interval = 200
 )
 
@@ -52,7 +51,7 @@ Import-Module -Force -Scope Local -Name $modulePath
 # インターバル設定
 Set-WTCCInterval -Interval $Interval
 
-# builder.ps1 を呼び出す（script.txt は廃止）
+# builder.ps1 を呼び出す（script.txt は完全廃止）
 $builder = Join-Path $here 'builder.ps1'
 if (-not (Test-Path -LiteralPath $builder)) {
     throw "builder.ps1 が見つからない: $builder"

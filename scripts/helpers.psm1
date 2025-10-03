@@ -118,32 +118,7 @@ function Quote-PSLiteral {
     return "'" + ($Text -replace "'", "''") + "'"
 }
 
-function Split-WTCCTokens {
-    param([Parameter(Mandatory)][string]$Text)
-    $tokens = New-Object System.Collections.Generic.List[string]
-    $buf = New-Object System.Text.StringBuilder
-    $inS = $false; $inD = $false
-    for ($i=0; $i -lt $Text.Length; $i++) {
-        $ch = $Text[$i]
-        if (-not $inS -and -not $inD) {
-            if ([char]::IsWhiteSpace($ch)) {
-                if ($buf.Length -gt 0) { $tokens.Add($buf.ToString()); $buf.Clear() | Out-Null }
-                continue
-            }
-            if ($ch -eq "'") { $inS = $true; continue }
-            if ($ch -eq '"') { $inD = $true; continue }
-            [void]$buf.Append($ch)
-        } elseif ($inS) {
-            if ($ch -eq "'") { $inS = $false; continue }
-            [void]$buf.Append($ch)
-        } else { # inD
-            if ($ch -eq '"') { $inD = $false; continue }
-            [void]$buf.Append($ch)
-        }
-    }
-    if ($buf.Length -gt 0) { $tokens.Add($buf.ToString()) }
-    return ,$tokens.ToArray()
-}
+## script.txt 互換のトークナイザ(Split-WTCCTokens)は廃止しました
 
 function Ensure-WTCCWinForms {
     try { $null = [System.Windows.Forms.SendKeys] } catch { Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop }
@@ -689,44 +664,6 @@ function Invoke-KeyCommand {
     Exit-WTCCFunc -Name 'Invoke-KeyCommand'
 }
 
-function Invoke-CommandLine {
-    param([string]$Line)
-    Enter-WTCCFunc -Name 'Invoke-CommandLine' -Params @{ Line = $Line }
-    if (-not $Line) { return }
-    $trim = $Line.Trim()
-    if ($trim.Length -eq 0) { return }
-    if ($trim.StartsWith('#')) { return }
+## Invoke-CommandLine も廃止しました（builder.ps1 直書き方式のみ対応）
 
-    # トークナイズ（クォート対応）。ただし pane exec は行末生渡し
-    $parts = @()
-    if ($trim -like 'pane exec *') {
-        $parts = @('pane','exec', $trim.Substring(10))
-    } else {
-        $parts = Split-WTCCTokens -Text $trim
-    }
-
-    $major = $parts[0]
-    $minorArgs = @()
-    if ($parts.Count -gt 1) { $minorArgs = $parts[1..($parts.Count-1)] }
-
-    switch ($major) {
-        'tab'    { Invoke-TabCommand    -ArgList $minorArgs }
-        'pane'   { Invoke-PaneCommand   -ArgList $minorArgs }
-        'window' { Invoke-WindowCommand -ArgList $minorArgs }
-        'key'    { Invoke-KeyCommand    -ArgList $minorArgs }
-        'key-send' { Invoke-KeyCommand  -ArgList $minorArgs }
-        'wait'   {
-            # ミリ秒待機: wait <milliseconds>
-            $ms = 0
-            if ($minorArgs -and $minorArgs.Count -gt 0) {
-                try { $ms = [int]$minorArgs[0] } catch { $ms = 0 }
-            }
-            if ($ms -lt 0) { $ms = 0 }
-            if ($ms -gt 0) { Start-Sleep -Milliseconds $ms }
-        }
-        default  { Write-Warning "未知のコマンド: $Line" }
-    }
-    Exit-WTCCFunc -Name 'Invoke-CommandLine'
-}
-
-Export-ModuleMember -Function *-WTCC*,Send-Key,Send-KeyCombo,Send-Text,Invoke-CommandLine,Invoke-TabCommand,Invoke-PaneCommand,Invoke-WindowCommand,Invoke-KeyCommand,Invoke-CommandPalette,Write-WTCCLog,Enter-WTCCFunc,Exit-WTCCFunc,Test-WTCCDebug
+Export-ModuleMember -Function *-WTCC*,Send-Key,Send-KeyCombo,Send-Text,Invoke-TabCommand,Invoke-PaneCommand,Invoke-WindowCommand,Invoke-KeyCommand,Invoke-CommandPalette,Write-WTCCLog,Enter-WTCCFunc,Exit-WTCCFunc,Test-WTCCDebug
