@@ -8,22 +8,27 @@
 # ウィンドウサイズ変更
 Invoke-WindowCommand -ArgList @('size','2000','1000')
 
-# 最初のペイン装飾・分割
-Invoke-PaneCommand -ArgList @('bg','#440011')
-Invoke-PaneCommand -ArgList @('split','horizontal')
-Invoke-PaneCommand -ArgList @('bg','#111122')
+# 最初のペイン装飾・分割（アクションを直接呼び出し）
+$split = Join-Path $PSScriptRoot 'scripts/actions/split.ps1'
+$setbg = Join-Path $PSScriptRoot 'scripts/actions/set-bg.ps1'
+$resize = Join-Path $PSScriptRoot 'scripts/actions/resize.ps1'
+
+# 背景色 → 分割 → 背景色
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Color '#440011'" -f $setbg))
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Mode horizontal" -f $split))
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Color '#111122'" -f $setbg))
 Invoke-PaneCommand -ArgList @('exec','cd ~')
 Invoke-PaneCommand -ArgList @('exec','cls')
 Invoke-PaneCommand -ArgList @('move','up','1')
 
-# サイズ調整＆初期化
-Invoke-PaneCommand -ArgList @('resize','down','2')
+# サイズ調整＆初期化（resize.ps1 を直接呼ぶ）
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Direction down -Count 2" -f $resize))
 Invoke-PaneCommand -ArgList @('exec','cd ~')
 Invoke-PaneCommand -ArgList @('exec','cls')
 
-# さらに分割して背景色
-Invoke-PaneCommand -ArgList @('split','vertical')
-Invoke-PaneCommand -ArgList @('bg','#004411')
+# さらに分割して背景色（直接呼び出し）
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Mode vertical" -f $split))
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Color '#004411'" -f $setbg))
 
 # タブ名とキー送出、軽く掃除
 Invoke-TabCommand -ArgList @('rename','WTCC USER')
@@ -35,15 +40,15 @@ Invoke-TabCommand -ArgList @('new','--tabColor','#330033')
 Start-Sleep -Milliseconds 1000
 
 # 新タブ側の初期化と分割・色・リサイズ
-Invoke-PaneCommand -ArgList @('bg','#1A0000')
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Color '#1A0000'" -f $setbg))
 Invoke-PaneCommand -ArgList @('exec','cls')
-Invoke-PaneCommand -ArgList @('split','vertical')
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Mode vertical" -f $split))
 Invoke-PaneCommand -ArgList @('exec','cls')
-Invoke-PaneCommand -ArgList @('bg','#001A00')
-Invoke-PaneCommand -ArgList @('resize','right','2')
-Invoke-PaneCommand -ArgList @('split','horizontal')
-Invoke-PaneCommand -ArgList @('bg','#00001A')
-Invoke-PaneCommand -ArgList @('resize','down','3')
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Color '#001A00'" -f $setbg))
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Direction right -Count 2" -f $resize))
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Mode horizontal" -f $split))
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Color '#00001A'" -f $setbg))
+Invoke-PaneCommand -ArgList @('exec', ("powershell -NoProfile -ExecutionPolicy Bypass -File '{0}' -Direction down -Count 3" -f $resize))
 Invoke-PaneCommand -ArgList @('exec','cls')
 
 # タブ名変更の表示とリネーム
@@ -53,4 +58,3 @@ Start-Sleep -Milliseconds 1000
 
 # 完了メッセージ
 Invoke-PaneCommand -ArgList @('exec','echo "ターミナル設定完了"')
-
