@@ -17,6 +17,8 @@ Invoke-WindowCommand -ArgList @('size','2000','1000')
 # builder用ヘルパーモジュールをImport（依存はモジュール側でも自動解決）
 $paneActions = Join-Path $PSScriptRoot 'scripts/actions/PaneActions.psm1'
 Import-Module -Force -Scope Local -Name $paneActions
+$tabActions  = Join-Path $PSScriptRoot 'scripts/actions/TabActions.psm1'
+Import-Module -Force -Scope Local -Name $tabActions
 
 # 背景色 → 分割 → 背景色
 Pane-SetBg '#440011'
@@ -41,7 +43,7 @@ Invoke-KeyCommand -ArgList @('enter')
 Pane-Exec 'cls'
 
 # 新規タブ（色付き）
-Invoke-TabCommand -ArgList @('new','--tabColor','#330033')
+Tab-Create "--tabColor '#330033'"
 Start-Sleep -Milliseconds 1000
 
 # 新タブ側の初期化と分割・色・リサイズ
