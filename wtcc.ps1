@@ -46,7 +46,7 @@ $ErrorActionPreference = 'Stop'
 # スクリプトルート解決
 $here = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 $modulePath = Join-Path $here 'scripts\helpers.psm1'
-Import-Module -Force -Scope Local -Name $modulePath
+Import-Module -Force -Scope Local -Name $modulePath -DisableNameChecking
 
 # インターバル設定
 Set-WTCCInterval -Interval $Interval

@@ -9,7 +9,7 @@ if (-not (Get-Command Invoke-PaneCommand -ErrorAction SilentlyContinue)) {
   try {
     $helpers = Join-Path (Split-Path $PSScriptRoot -Parent) 'helpers.psm1'
     if (Test-Path -LiteralPath $helpers) {
-      Import-Module -Force -Scope Local -Name $helpers
+      Import-Module -Force -Scope Local -Name $helpers -DisableNameChecking
     } else {
       Write-Warning ("helpers.psm1 が見つからない: {0}" -f $helpers)
     }

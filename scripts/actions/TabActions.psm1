@@ -8,7 +8,7 @@
 if (-not (Get-Command Invoke-PaneCommand -ErrorAction SilentlyContinue)) {
   try {
     $helpers = Join-Path (Split-Path $PSScriptRoot -Parent) 'helpers.psm1'
-    if (Test-Path -LiteralPath $helpers) { Import-Module -Force -Scope Local -Name $helpers }
+    if (Test-Path -LiteralPath $helpers) { Import-Module -Force -Scope Local -Name $helpers -DisableNameChecking }
   } catch { Write-Warning ("helpers.psm1 のImport失敗: {0}" -f $_.Exception.Message) }
 }
 
@@ -21,4 +21,3 @@ function Tab-Create {
 }
 
 Export-ModuleMember -Function Tab-*
-

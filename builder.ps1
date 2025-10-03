@@ -8,7 +8,7 @@
 # 直接実行されるケースに備えて helpers.psm1 をロード
 $helpers = Join-Path $PSScriptRoot 'scripts/helpers.psm1'
 if (-not (Get-Command Invoke-PaneCommand -ErrorAction SilentlyContinue)) {
-  if (Test-Path -LiteralPath $helpers) { Import-Module -Force -Scope Local -Name $helpers }
+  if (Test-Path -LiteralPath $helpers) { Import-Module -Force -Scope Local -Name $helpers -DisableNameChecking }
 }
 
 # ウィンドウサイズ変更
@@ -16,9 +16,9 @@ Invoke-WindowCommand -ArgList @('size','2000','1000')
 
 # builder用ヘルパーモジュールをImport（依存はモジュール側でも自動解決）
 $paneActions = Join-Path $PSScriptRoot 'scripts/actions/PaneActions.psm1'
-Import-Module -Force -Scope Local -Name $paneActions
+Import-Module -Force -Scope Local -Name $paneActions -DisableNameChecking
 $tabActions  = Join-Path $PSScriptRoot 'scripts/actions/TabActions.psm1'
-Import-Module -Force -Scope Local -Name $tabActions
+Import-Module -Force -Scope Local -Name $tabActions -DisableNameChecking
 
 # 背景色 → 分割 → 背景色
 Pane-SetBg '#440011'
