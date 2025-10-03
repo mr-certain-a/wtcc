@@ -120,20 +120,6 @@ function Quote-PSLiteral {
 
 ## script.txt 互換のトークナイザ(Split-WTCCTokens)は廃止しました
 
-function Ensure-WTCCWinForms {
-    try { $null = [System.Windows.Forms.SendKeys] } catch { Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop }
-}
-
-function Send-AltShiftKey {
-    param([Parameter(Mandatory)][string]$Token)
-    Enter-WTCCFunc -Name 'Send-AltShiftKey' -Params @{ Token = $Token }
-    Ensure-WTCCWinForms
-    $pattern = "%+{" + $Token + "}"
-    [System.Windows.Forms.SendKeys]::SendWait($pattern)
-    if ($script:WTCC_Interval -gt 0) { Start-Sleep -Milliseconds $script:WTCC_Interval }
-    Exit-WTCCFunc -Name 'Send-AltShiftKey'
-}
-
 # --- デバッグロギング -------------------------------------------------------
 function Test-WTCCDebug {
     $val = [string]$env:WTCC_DEBUG
@@ -404,41 +390,7 @@ public static class WTCC_Clipboard {
     Exit-WTCCFunc -Name 'Send-Text'
 }
 
-function Invoke-CommandPalette {
-    param([Parameter(Mandatory)][string]$Query,
-          [string]$AfterText,
-          [switch]$PressEnterAfterQuery,
-          [switch]$PressEnterAfterText)
-    Enter-WTCCFunc -Name 'Invoke-CommandPalette' -Params @{ Query = $Query; AfterLen = ($AfterText?.Length); QEnter = [bool]$PressEnterAfterQuery; TEnter = [bool]$PressEnterAfterText }
-
-    Send-KeyCombo @($script:_VK.CTRL, $script:_VK.SHIFT, $script:_VK.P)
-    Send-Text $Query
-    if ($PressEnterAfterQuery) {
-        # コマンド確定（例: Rename tab 実行）
-        Send-Key $script:_VK.ENTER
-        # 実行直後はフォーカスがフィールドに移るまで少し間がある。
-        # ここで短い待機を入れないと、貼り付けの先頭がコンソールに落ちることがある。
-        if ($AfterText) {
-            $preDelay = [Math]::Max(200, [int]($script:WTCC_Interval * 2))
-            Start-Sleep -Milliseconds $preDelay
-        }
-    }
-    if ($AfterText) {
-        # 貼り付け（Send-TextはCtrl+Vベース）
-        # 念のため既存文字を全選択してから上書き（Ctrl+A）
-        Send-KeyCombo @($script:_VK.CTRL, 0x41)  # Ctrl + A
-        Send-Text $AfterText
-        # 貼り付けの描画/確定に少し待ちを入れてからEnterで確定（従来の約2倍）
-        if ($PressEnterAfterText) {
-            $delay = [Math]::Max(100, [int]($script:WTCC_Interval * 2))
-            Start-Sleep -Milliseconds $delay
-            Send-Key $script:_VK.ENTER
-        }
-    } elseif ($PressEnterAfterText) {
-        Send-Key $script:_VK.ENTER
-    }
-    Exit-WTCCFunc -Name 'Invoke-CommandPalette'
-}
+## Invoke-CommandPalette は未使用につき削除
 
 function Send-BackspaceBurst {
     param([int]$Count = 20)
@@ -453,30 +405,6 @@ function Invoke-TabCommand {
     Enter-WTCCFunc -Name 'Invoke-TabCommand' -Params @{ Args = ($ArgList -join ' ') }
     if (-not $ArgList -or $ArgList.Count -lt 1) { return }
     switch -Regex ($ArgList[0]) {
-        '^new$' {
-            # 追加指定: tab new [--title <NAME>|title=<NAME>] [--tabColor <#RRGGBB>|tabColor=<#RRGGBB>|color=<#RRGGBB>]
-            $title = $null; $color = $null
-            for ($i = 1; $i -lt $ArgList.Count; $i++) {
-                $tok = [string]$ArgList[$i]
-                if ($tok -match '^(?:--title|title)=(.+)$') { $title = $Matches[1]; continue }
-                if ($tok -match '^(?:--tabColor|tabColor|color)=(.+)$') { $color = $Matches[1]; continue }
-                if ($tok -eq '--title' -and ($i+1) -lt $ArgList.Count) { $title = [string]$ArgList[++$i]; continue }
-                if ($tok -eq '--tabColor' -and ($i+1) -lt $ArgList.Count) { $color = [string]$ArgList[++$i]; continue }
-            }
-
-            if ($title -or $color) {
-                $cmd = 'wt'
-                if ($title) { $cmd += (' --title ' + (Quote-PSLiteral $title)) }
-                if ($color) { $cmd += (' --tabColor ' + (Quote-PSLiteral $color)) }
-                Send-Text $cmd
-                Send-Key $script:_VK.ENTER
-                Start-Sleep -Seconds 2
-            } else {
-                # 既定: Ctrl+Shift+D で新規タブ作成＋固定2秒待機
-                Send-KeyCombo @($script:_VK.CTRL, $script:_VK.SHIFT, 0x44) # 'D'
-                Start-Sleep -Seconds 2
-            }
-        }
         '^rename$' {
             $name = ($ArgList | Select-Object -Skip 1) -join ' '
             $cmd = Get-WTCCWTCommand -Key 'rename-tab' -Default 'Rename tab'
@@ -501,10 +429,7 @@ function Invoke-TabCommand {
             # コンソールに残ったゴミ文字を掃除（インターバルなしでBackspace×20）
             Send-BackspaceBurst -Count 20
         }
-        '^color$' {
-            $color = ($ArgList | Select-Object -Skip 1) -join ' '
-            Invoke-CommandPalette -Query 'Set tab color' -PressEnterAfterQuery -AfterText $color -PressEnterAfterText
-        }
+        # 他のサブコマンド（new/color等）は Pane/TabActions に移行済みのため削除
     }
     Exit-WTCCFunc -Name 'Invoke-TabCommand'
 }
@@ -514,63 +439,10 @@ function Invoke-PaneCommand {
     Enter-WTCCFunc -Name 'Invoke-PaneCommand' -Params @{ Args = ($ArgList -join ' ') }
     if (-not $ArgList -or $ArgList.Count -lt 1) { return }
     switch -Regex ($ArgList[0]) {
-        '^split$' {
-            $mode = $ArgList[1]
-            if ($mode -notmatch '^(vertical|horizontal)$') {
-                Send-KeyCombo @($script:_VK.ALT, $script:_VK.SHIFT, 0x44) # Fallback 'D'
-                break
-            }
-            $scriptPath = Join-Path $PSScriptRoot 'actions\split.ps1'
-            $quoted = Quote-PSLiteral $scriptPath
-            $cmd = "powershell -NoProfile -ExecutionPolicy Bypass -File $quoted -Mode $mode"
-            Send-Text $cmd
-            Send-Key $script:_VK.ENTER
-        }
-        '^resize$' {
-            $dir = $ArgList[1]
-            $count = [int]($ArgList[2])
-            $vk = switch ($dir) {
-                'left'  { $script:_VK.LEFT }
-                'right' { $script:_VK.RIGHT }
-                'up'    { $script:_VK.UP }
-                'down'  { $script:_VK.DOWN }
-                default { $null }
-            }
-            if ($vk -ne $null) {
-                1..$count | ForEach-Object {
-                    # 旧 move の挙動: ALT+SHIFT+矢印でペインサイズ変更
-                    Send-KeyCombo @($script:_VK.SHIFT, $script:_VK.ALT, $vk)
-                }
-            }
-        }
-        '^move$' {
-            $dir = $ArgList[1]
-            $count = [int]($ArgList[2])
-            $vk = switch ($dir) {
-                'left'  { $script:_VK.LEFT }
-                'right' { $script:_VK.RIGHT }
-                'up'    { $script:_VK.UP }
-                'down'  { $script:_VK.DOWN }
-                default { $null }
-            }
-            if ($vk -ne $null) {
-                1..$count | ForEach-Object {
-                    # 新 move の挙動: ALT+矢印でペイン移動
-                    Send-KeyCombo @($script:_VK.ALT, $vk)
-                }
-            }
-        }
-        # removed: '^bgcolor$' (deprecated)
-        '^bg$' {
-            $color = [string]($ArgList | Select-Object -Skip 1)
-            if (-not $color) { Write-Warning 'pane bg には #RRGGBB を指定してね'; break }
-            $scriptPath = Join-Path $PSScriptRoot 'actions\set-bg.ps1'
-            $quoted = Quote-PSLiteral $scriptPath
-            $cArg = Quote-PSLiteral $color
-            $cmd = "& $quoted -Color $cArg"
-            Send-Text $cmd
-            Send-Key $script:_VK.ENTER
-        }
+        
+        
+        
+        
         '^exec$' {
             $cmdline = ($ArgList | Select-Object -Skip 1) -join ' '
             # ';' 区切りを順次実行
@@ -664,4 +536,4 @@ function Invoke-KeyCommand {
 
 ## Invoke-CommandLine も廃止しました（builder.ps1 直書き方式のみ対応）
 
-Export-ModuleMember -Function *-WTCC*,Send-Key,Send-KeyCombo,Send-Text,Invoke-TabCommand,Invoke-PaneCommand,Invoke-WindowCommand,Invoke-KeyCommand,Invoke-CommandPalette,Write-WTCCLog,Enter-WTCCFunc,Exit-WTCCFunc,Test-WTCCDebug
+Export-ModuleMember -Function *-WTCC*,Send-Key,Send-KeyCombo,Send-Text,Invoke-TabCommand,Invoke-PaneCommand,Invoke-WindowCommand,Invoke-KeyCommand,Write-WTCCLog,Enter-WTCCFunc,Exit-WTCCFunc,Test-WTCCDebug
