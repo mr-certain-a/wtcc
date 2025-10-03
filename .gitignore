@@ -3,4 +3,5 @@ icons/powershell_icon_512.png
 images/*
 !images/
 !images/bg*.png
+!images/xumi_sofa.png
 AGENTS.md
