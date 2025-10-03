@@ -1,10 +1,10 @@
 # WTCC エントリポイント (Windows Terminal Cockpit Customizer)
 param(
-    [string]$ScriptPath = "./script.txt",
+    [string]$ScriptPath = "./script.txt",  # 後方互換のため残置（未使用）
     [int]$Interval = 1000
 )
 
-Write-Host ""
+Write-Host "" 
 Write-Host "=============================================" -ForegroundColor Yellow
 Write-Host " WTCC: Windowsターミナルを新規に起動してキーボードエミュレーションで設定していきます。" -ForegroundColor Cyan
 Write-Host "  → WTの設定によっては動きが異なる場合があります。" -ForegroundColor Cyan
@@ -52,17 +52,13 @@ Import-Module -Force -Scope Local -Name $modulePath
 # インターバル設定
 Set-WTCCInterval -Interval $Interval
 
-if (-not (Test-Path -LiteralPath $ScriptPath)) {
-    throw "手順ファイルが見つからない: $ScriptPath"
+# builder.ps1 を呼び出す（script.txt は廃止）
+$builder = Join-Path $here 'builder.ps1'
+if (-not (Test-Path -LiteralPath $builder)) {
+    throw "builder.ps1 が見つからない: $builder"
 }
+Write-Host ("WTCC: builder を実行するよ -> {0} (Interval={1}ms)" -f $builder, $Interval) -ForegroundColor Cyan
 
-Write-Host "WTCC: 手順ファイルを実行するよ -> $ScriptPath (Interval=${Interval}ms)" -ForegroundColor Cyan
-
-# 行単位で実行
-Get-Content -LiteralPath $ScriptPath -Encoding UTF8 | ForEach-Object {
-    $line = $_.TrimEnd()
-    Write-Host "Ran: $line"
-    Invoke-CommandLine -Line $line
-}
+& $builder
 
 Write-Host "WTCC: 実行完了だよん?" -ForegroundColor Green
