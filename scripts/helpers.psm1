@@ -496,10 +496,8 @@ function Invoke-TabCommand {
             Send-Text $name
             $post = [Math]::Max(100, 200)
             Start-Sleep -Milliseconds $post
-            # 要望: 入力後に Enter を2回送出（間に短い待機を挟む）
             Send-Key $script:_VK.ENTER
             Start-Sleep -Milliseconds 150
-            Send-Key $script:_VK.ENTER
             # コンソールに残ったゴミ文字を掃除（インターバルなしでBackspace×20）
             Send-BackspaceBurst -Count 20
         }

@@ -60,4 +60,4 @@ Write-Host ("WTCC: builder を実行するよ -> {0} (Interval={1}ms)" -f $build
 
 & $builder
 
-Write-Host "WTCC: 実行完了だよん?" -ForegroundColor Green
+Write-Host "WTCC: 実行完了だよん✌" -ForegroundColor Green
