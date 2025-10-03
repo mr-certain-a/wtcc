@@ -40,6 +40,19 @@ function Profile-Add {
     $profilesList = $doc['profiles']['list']
   }
 
+  # すでに同名のプロファイルが存在する場合はスキップ
+  $exists = $false
+  foreach ($p in $profilesList) {
+    $pn = $null
+    if ($p -is [hashtable]) { $pn = [string]$p['name'] }
+    else { $pn = [string]$p.name }
+    if (-not [string]::IsNullOrEmpty($pn) -and $pn -eq $Name) { $exists = $true; break }
+  }
+  if ($exists) {
+    Write-Host ("Profile '{0}' は既に存在するため追加をスキップ" -f $Name) -ForegroundColor Yellow
+    return
+  }
+
   # 追加プロファイルの組み立て（必須/既定）
   $guid = '{' + ([guid]::NewGuid().ToString()) + '}'
   $profile = [ordered]@{
@@ -82,8 +95,10 @@ function Profile-Add {
   $idx = -1
   for ($i=0; $i -lt $asList.Count; $i++) {
     $p = $asList[$i]
-    $pn = $p.name; $pg = $p.guid
-    if ($pn -eq $profile['name'] -or $pg -eq $profile['guid']) { $idx = $i; break }
+    $pn = $null; $pg = $null
+    if ($p -is [hashtable]) { $pn = $p['name']; $pg = $p['guid'] }
+    else { $pn = $p.name; $pg = $p.guid }
+    if ($pg -eq $profile['guid']) { $idx = $i; break }
   }
   if ($idx -ge 0) { $asList[$idx] = $profile }
   else            { [void]$asList.Add($profile) }
@@ -102,4 +117,3 @@ function Profile-Add {
 }
 
 Export-ModuleMember -Function Profile-Add
-
