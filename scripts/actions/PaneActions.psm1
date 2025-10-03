@@ -19,7 +19,7 @@ if (-not (Get-Command Invoke-PaneCommand -ErrorAction SilentlyContinue)) {
 }
 
 function Get-PaneActionScriptPath {
-  param([Parameter(Mandatory)][ValidateSet('split','set-bg','resize')] [string]$Name)
+  param([Parameter(Mandatory)][ValidateSet('split','set-bg','resize','move')] [string]$Name)
   return (Join-Path $PSScriptRoot ("{0}.ps1" -f $Name))
 }
 
@@ -52,6 +52,18 @@ function Pane-Resize {
     [int]$Count = 1
   )
   $path = Get-PaneActionScriptPath -Name 'resize'
+  $pp   = "'" + ($path -replace "'", "''") + "'"
+  $dd   = "'" + ($Direction -replace "'", "''") + "'"
+  $cmd  = "& $pp -Direction $dd -Count $Count"
+  Invoke-PaneCommand -ArgList @('exec', $cmd)
+}
+
+function Pane-Move {
+  [CmdletBinding()] param(
+    [Parameter(Mandatory)][ValidateSet('left','right','up','down')] [string]$Direction,
+    [int]$Count = 1
+  )
+  $path = Get-PaneActionScriptPath -Name 'move'
   $pp   = "'" + ($path -replace "'", "''") + "'"
   $dd   = "'" + ($Direction -replace "'", "''") + "'"
   $cmd  = "& $pp -Direction $dd -Count $Count"

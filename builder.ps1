@@ -22,9 +22,9 @@ Import-Module -Force -Scope Local -Name $paneActions
 Pane-SetBg '#440011'
 Pane-Split 'horizontal'
 Pane-SetBg '#111122'
-Invoke-PaneCommand -ArgList @('exec','cd ~')
-Invoke-PaneCommand -ArgList @('exec','cls')
-Invoke-PaneCommand -ArgList @('move','up','1')
+Pane-Exec 'cd ~'
+Pane-Exec 'cls'
+Pane-Move 'up' 1
 
 # サイズ調整＆初期化（関数経由）
 Pane-Resize 'down' 2
@@ -54,7 +54,7 @@ Pane-Resize 'right' 2
 Pane-Split 'horizontal'
 Pane-SetBg '#00001A'
 Pane-Resize 'down' 3
-Invoke-PaneCommand -ArgList @('exec','cls')
+Pane-Exec 'cls'
 
 # タブ名変更の表示とリネーム
 Pane-Exec 'echo "タブ名を変更する..."'
