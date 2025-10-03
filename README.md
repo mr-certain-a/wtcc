@@ -16,7 +16,7 @@ pwsh -ExecutionPolicy Bypass -File .\wtcc.ps1 -Interval 500
 ```
 
 - `wtcc.ps1` は Windows Terminal を新規タブで起動し、`scripts/helpers.psm1` を読み込んでから `builder.ps1` を実行するエントリポイント。
-- 旧 `script.txt` は廃止。互換のため `-ScriptPath` パラメータは残ってるけど未使用だよ。
+- 旧 `script.txt` は完全廃止。互換機能や `-ScriptPath` パラメータは提供しないよ。
 
 ### 事前に知ってほしい注意点
 
