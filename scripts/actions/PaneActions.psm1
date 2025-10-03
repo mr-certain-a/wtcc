@@ -1,8 +1,22 @@
 <#
   PaneActions.psm1
   - WTCCのbuilder用ヘルパー関数群（読みやすさ重視の薄いラッパー）
-  - 前提: 同プロセスで WTCC の helpers.psm1 が読み込まれており、Invoke-PaneCommand 等が使用可能
+  - helpers.psm1 に依存するため、未ロードなら相対パスで自動Importする
 #>
+
+# 依存モジュール（helpers.psm1）を必要に応じて読み込み
+if (-not (Get-Command Invoke-PaneCommand -ErrorAction SilentlyContinue)) {
+  try {
+    $helpers = Join-Path (Split-Path $PSScriptRoot -Parent) 'helpers.psm1'
+    if (Test-Path -LiteralPath $helpers) {
+      Import-Module -Force -Scope Local -Name $helpers
+    } else {
+      Write-Warning ("helpers.psm1 が見つからない: {0}" -f $helpers)
+    }
+  } catch {
+    Write-Warning ("helpers.psm1 のImportに失敗: {0}" -f $_.Exception.Message)
+  }
+}
 
 function Get-PaneActionScriptPath {
   param([Parameter(Mandatory)][ValidateSet('split','set-bg','resize')] [string]$Name)
@@ -55,4 +69,3 @@ function Pane-ExecMany {
 }
 
 Export-ModuleMember -Function Pane-*
-

@@ -5,10 +5,16 @@
   - 前提: `wtcc.ps1` 側で `Set-WTCCInterval` 済み＆WT が起動・アクティブになっていること
 #>
 
+# 直接実行されるケースに備えて helpers.psm1 をロード
+$helpers = Join-Path $PSScriptRoot 'scripts/helpers.psm1'
+if (-not (Get-Command Invoke-PaneCommand -ErrorAction SilentlyContinue)) {
+  if (Test-Path -LiteralPath $helpers) { Import-Module -Force -Scope Local -Name $helpers }
+}
+
 # ウィンドウサイズ変更
 Invoke-WindowCommand -ArgList @('size','2000','1000')
 
-# builder用ヘルパーモジュールをImport
+# builder用ヘルパーモジュールをImport（依存はモジュール側でも自動解決）
 $paneActions = Join-Path $PSScriptRoot 'scripts/actions/PaneActions.psm1'
 Import-Module -Force -Scope Local -Name $paneActions
 
